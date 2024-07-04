@@ -22,12 +22,12 @@ This project is a simple HTTP file server built using Node.js and Express. It pr
 
 2. Install dependencies:
    ```sh
-   npm install express multer unzipper
+   npm install express multer unzipper minimist
    ```
 
 3. Start the server:
    ```sh
-   node server.js
+   node server.js -p PORT_NUMBER  #default to 8090 if not specified
    ```
 
 ### Usage

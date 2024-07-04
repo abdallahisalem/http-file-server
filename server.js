@@ -4,9 +4,12 @@ const path = require('path');
 const fs = require('fs');
 const unzipper = require('unzipper');
 const basicAuth = require('basic-auth');
+const minimist = require('minimist');
+
+const args = minimist(process.argv.slice(2));
+const PORT = args.p || 8090; // Default to 8090 if no port is specified
 
 const app = express();
-const PORT = 8090;
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
 
 // Create uploads directory if it doesn't exist
