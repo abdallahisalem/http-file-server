@@ -17,7 +17,7 @@ This project is a simple HTTP file server built using Node.js and Express. It pr
 1. Clone the repository:
    ```sh
    git clone https://github.com/abdallahisalem/http-file-server.git
-   cd your-repository
+   cd http-file-server
    ```
 
 2. Install dependencies:
