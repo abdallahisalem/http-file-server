@@ -38,7 +38,8 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage }).single('file');
 
 // Serve static files
-app.use(express.static(UPLOAD_DIR));
+app.use('/uploads', express.static(UPLOAD_DIR));
+app.use('/static', express.static(path.join(__dirname, 'static')));
 
 // Middleware for basic authentication
 const auth = (req, res, next) => {
@@ -75,6 +76,7 @@ app.post('/upload', auth, (req, res) => {
 
     // Check if the uploaded file is a zip file
     if (path.extname(req.file.originalname) === '.zip') {
+      io.emit('decompress', { message: 'Starting decompression...' });
       const unzipStream = fs.createReadStream(filePath)
         .pipe(unzipper.Extract({ path: UPLOAD_DIR }));
 
@@ -94,7 +96,7 @@ app.post('/upload', auth, (req, res) => {
       });
     } else {
       io.emit('progress', { message: `File uploaded successfully: ${req.file.originalname}` });
-      res.send(`File uploaded successfully: <a href="/${req.file.originalname}">${req.file.originalname}</a>`);
+      res.send(`File uploaded successfully: <a href="/uploads/${req.file.originalname}">${req.file.originalname}</a>`);
     }
   });
 });
@@ -132,9 +134,22 @@ app.get('/files/*?', auth, (req, res) => {
     }).join('');
 
     res.send(`
-      <h2>Files in ${dirPath}</h2>
-      <ul>${fileList}</ul>
-      <a href="/">Back to Upload</a>
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>File List</title>
+        <link rel="stylesheet" href="/static/styles.css">
+      </head>
+      <body>
+        <div class="container">
+          <h1>Files in uploads${reqPath}</h1>
+          <ul>${fileList}</ul>
+          <a href="/" class="btn">Back to Upload</a>
+        </div>
+      </body>
+      </html>
     `);
   });
 });
@@ -143,4 +158,3 @@ app.get('/files/*?', auth, (req, res) => {
 server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
-

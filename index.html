@@ -5,26 +5,88 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>File Upload</title>
   <script src="/socket.io/socket.io.js"></script>
+  <link rel="stylesheet" href="../../static/styles.css">
 </head>
 <body>
-  <h2>Upload a file or directory (as a zip file)</h2>
-  <form action="/upload" method="post" enctype="multipart/form-data">
-    <input type="file" name="file" />
-    <button type="submit">Upload</button>
-  </form>
-  <h2>Delete a file</h2>
-  <form action="/delete" method="post">
-    <input type="text" name="filename" placeholder="Enter filename to delete" />
-    <button type="submit">Delete</button>
-  </form>
-  <h2>View Files</h2>
-  <a href="/files/">View files in uploads directory</a>
-  <h2>Progress</h2>
-  <div id="progress"></div>
+  <div class="container">
+    <h1>File Management System</h1>
+    
+    <section>
+      <h2>Upload a File or Directory (as a zip file)</h2>
+      <form id="upload-form" action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" id="file" class="input-file"/>
+        <button type="submit" class="btn">Upload</button>
+      </form>
+      <div id="progress-bar">
+        <div id="progress-bar-fill">0%</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Progress</h2>
+      <div id="progress"></div>
+    </section>
+    
+    <section>
+      <h2>Delete a File</h2>
+      <form action="/delete" method="post">
+        <input type="text" name="filename" placeholder="Enter filename to delete" class="input-text"/>
+        <button type="submit" class="btn">Delete</button>
+      </form>
+    </section>
+
+    <section>
+      <h2>View Files</h2>
+      <a href="/files/" class="link">View files in uploads directory</a>
+    </section>
+  </div>
+
   <script>
     const socket = io();
+    const form = document.getElementById('upload-form');
+    const progressBarFill = document.getElementById('progress-bar-fill');
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const fileInput = document.getElementById('file');
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/upload', true);
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = (event.loaded / event.total) * 100;
+          progressBarFill.style.width = percentComplete + '%';
+          progressBarFill.textContent = Math.round(percentComplete) + '%';
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          console.log('Upload complete');
+        } else {
+          console.error('Upload failed');
+        }
+      };
+
+      xhr.send(formData);
+    });
+
+    socket.on('uploadProgress', (progress) => {
+      progressBarFill.style.width = progress.percentage + '%';
+      progressBarFill.textContent = Math.round(progress.percentage) + '%';
+    });
 
     socket.on('progress', (data) => {
+      const progressDiv = document.getElementById('progress');
+      const message = document.createElement('p');
+      message.textContent = data.message;
+      progressDiv.appendChild(message);
+    });
+
+    socket.on('decompress', (data) => {
       const progressDiv = document.getElementById('progress');
       const message = document.createElement('p');
       message.textContent = data.message;
@@ -33,4 +95,3 @@
   </script>
 </body>
 </html>
-
