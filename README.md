@@ -22,7 +22,7 @@ This project is a simple HTTP file server built using Node.js and Express. It pr
 
 2. Install dependencies:
    ```sh
-   npm install express multer unzipper minimist
+   npm install express multer unzipper minimist basic-auth
    ```
 
 3. Start the server:
