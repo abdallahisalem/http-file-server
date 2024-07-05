@@ -3,13 +3,17 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const unzipper = require('unzipper');
-const basicAuth = require('basic-auth');
+const http = require('http');
+const socketIo = require('socket.io');
 const minimist = require('minimist');
+const basicAuth = require('basic-auth');
 
 const args = minimist(process.argv.slice(2));
-const PORT = args.p || 8090; // Default to 8090 if no port is specified
+const PORT = args.p || 8090;
 
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server);
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
 
 // Create uploads directory if it doesn't exist
@@ -51,18 +55,7 @@ const auth = (req, res, next) => {
 
 // Route to serve the upload form
 app.get('/', auth, (req, res) => {
-  res.send(`
-    <h2>Upload a file or directory (as a zip file)</h2>
-    <form action="/upload" method="post" enctype="multipart/form-data">
-      <input type="file" name="file" />
-      <button type="submit">Upload</button>
-    </form>
-    <h2>Delete a file</h2>
-    <form action="/delete" method="post">
-      <input type="text" name="filename" placeholder="Enter filename to delete" />
-      <button type="submit">Delete</button>
-    </form>
-  `);
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Route to handle file upload
@@ -82,16 +75,25 @@ app.post('/upload', auth, (req, res) => {
 
     // Check if the uploaded file is a zip file
     if (path.extname(req.file.originalname) === '.zip') {
-      fs.createReadStream(filePath)
-        .pipe(unzipper.Extract({ path: UPLOAD_DIR }))
-        .on('close', () => {
-          fs.unlinkSync(filePath); // Remove the zip file after extraction
-          res.send('Zip file extracted successfully.');
-        })
-        .on('error', (err) => {
-          res.status(500).send('Error extracting zip file.');
-        });
+      const unzipStream = fs.createReadStream(filePath)
+        .pipe(unzipper.Extract({ path: UPLOAD_DIR }));
+
+      unzipStream.on('entry', (entry) => {
+        io.emit('progress', { message: `Extracting ${entry.path}` });
+      });
+
+      unzipStream.on('close', () => {
+        fs.unlinkSync(filePath); // Remove the zip file after extraction
+        io.emit('progress', { message: 'Zip file extracted successfully.' });
+        res.send('Zip file extracted successfully.');
+      });
+
+      unzipStream.on('error', (err) => {
+        io.emit('progress', { message: 'Error extracting zip file.' });
+        res.status(500).send('Error extracting zip file.');
+      });
     } else {
+      io.emit('progress', { message: `File uploaded successfully: ${req.file.originalname}` });
       res.send(`File uploaded successfully: <a href="/${req.file.originalname}">${req.file.originalname}</a>`);
     }
   });
@@ -114,8 +116,31 @@ app.post('/delete', auth, express.urlencoded({ extended: true }), (req, res) => 
   });
 });
 
+// Route to list the contents of the uploads directory
+app.get('/files/*?', auth, (req, res) => {
+  const reqPath = decodeURIComponent(req.path.replace('/files', ''));
+  const dirPath = path.join(UPLOAD_DIR, reqPath);
+
+  fs.readdir(dirPath, { withFileTypes: true }, (err, files) => {
+    if (err) {
+      return res.status(500).send('Unable to scan directory.');
+    }
+
+    let fileList = files.map(file => {
+      const filePath = path.join(reqPath, file.name);
+      return `<li><a href="/files${filePath}${file.isDirectory() ? '/' : ''}">${file.name}</a></li>`;
+    }).join('');
+
+    res.send(`
+      <h2>Files in ${dirPath}</h2>
+      <ul>${fileList}</ul>
+      <a href="/">Back to Upload</a>
+    `);
+  });
+});
+
 // Start the server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
 
