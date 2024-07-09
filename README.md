@@ -27,7 +27,7 @@ This project is a simple HTTP file server built using Node.js and Express. It pr
 
 3. Start the server:
    ```sh
-   node start -p PORT_NUMBER  #default to 7000 if not specified
+   npm start -p PORT_NUMBER  #default to 7000 if not specified
    ```
 
 ### Usage
