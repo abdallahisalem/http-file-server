@@ -1,0 +1,33 @@
+{
+  "name": "http-file-server",
+  "version": "1.0.0",
+  "description": "### Description",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js -p"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abdallahisalem/http-file-server.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/abdallahisalem/http-file-server/issues"
+  },
+  "homepage": "https://github.com/abdallahisalem/http-file-server#readme",
+  "dependencies": {
+    "basic-auth": "^2.0.1",
+    "cross-env": "^7.0.3",
+    "express": "^4.19.2",
+    "fs": "^0.0.1-security",
+    "http": "^0.0.1-security",
+    "minimist": "^1.2.8",
+    "multer": "^1.4.5-lts.1",
+    "path": "^0.12.7",
+    "socket.io": "^4.7.5",
+    "unzipper": "^0.12.1"
+  }
+}

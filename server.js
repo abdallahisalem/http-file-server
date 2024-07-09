@@ -9,7 +9,15 @@ const minimist = require('minimist');
 const basicAuth = require('basic-auth');
 
 const args = minimist(process.argv.slice(2));
-const PORT = args.p || 8090;
+
+// Validate and set the port
+const DEFAULT_PORT = 7000;
+const validatePort = (port) => {
+  const num = parseInt(port, 10);
+  return num >= 2000 && num <= 65535 ? num : DEFAULT_PORT;
+};
+const PORT = validatePort(args.p);
+
 
 const app = express();
 const server = http.createServer(app);
@@ -37,8 +45,8 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage }).single('file');
 
-// Serve static files
-app.use('/uploads', express.static(UPLOAD_DIR));
+// Serve static files directly from the uploads directory
+app.use(express.static(UPLOAD_DIR));
 app.use('/static', express.static(path.join(__dirname, 'static')));
 
 // Middleware for basic authentication
@@ -96,7 +104,7 @@ app.post('/upload', auth, (req, res) => {
       });
     } else {
       io.emit('progress', { message: `File uploaded successfully: ${req.file.originalname}` });
-      res.send(`File uploaded successfully: <a href="/uploads/${req.file.originalname}">${req.file.originalname}</a>`);
+      res.send(`File uploaded successfully: <a href="/${req.file.originalname}">${req.file.originalname}</a>`);
     }
   });
 });
@@ -130,7 +138,9 @@ app.get('/files/*?', auth, (req, res) => {
 
     let fileList = files.map(file => {
       const filePath = path.join(reqPath, file.name);
-      return `<li><a href="/files${filePath}${file.isDirectory() ? '/' : ''}">${file.name}</a></li>`;
+      return file.isDirectory()
+        ? `<li><a href="/files${filePath}/">${file.name}/</a></li>`
+        : `<li><a href="${filePath}">${file.name}</a></li>`;
     }).join('');
 
     res.send(`
