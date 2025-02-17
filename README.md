@@ -32,7 +32,7 @@ This project is a simple HTTP file server built using Node.js and Express. It pr
 
 ### Usage
 
-- Navigate to `http://localhost:8090/` in your web browser.
+- Navigate to `http://localhost:7000/` in your web browser.
 - Enter the provided credentials to authenticate.
 - Use the form to upload files or zip files.
 - Use the delete form to remove files from the server.
@@ -40,7 +40,7 @@ This project is a simple HTTP file server built using Node.js and Express. It pr
 ### Configuration
 
 - Modify the username and password for authentication in the `server.js` file.
-- Ensure the server is running on the desired port (default: 8090).
+- Ensure the server is running on the desired port (default: 7000).
 
 ### .gitignore
 
